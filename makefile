@@ -1580,7 +1580,8 @@ PDP8 = ${PDP8D}/pdp8_cpu.c ${PDP8D}/pdp8_clk.c ${PDP8D}/pdp8_df.c \
 	${PDP8D}/pdp8_pt.c ${PDP8D}/pdp8_rf.c ${PDP8D}/pdp8_rk.c \
 	${PDP8D}/pdp8_rx.c ${PDP8D}/pdp8_sys.c ${PDP8D}/pdp8_tt.c \
 	${PDP8D}/pdp8_ttx.c ${PDP8D}/pdp8_rl.c ${PDP8D}/pdp8_tsc.c \
-	${PDP8D}/pdp8_td.c ${PDP8D}/pdp8_ct.c ${PDP8D}/pdp8_fpp.c
+	${PDP8D}/pdp8_td.c ${PDP8D}/pdp8_ct.c ${PDP8D}/pdp8_fpp.c \
+	${PDP8D}/pdp8_music.c
 PDP8_OPT = -I ${PDP8D}
 
 
@@ -2219,7 +2220,7 @@ pdp8 : ${BIN}pdp8${EXE}
 
 ${BIN}pdp8${EXE} : ${PDP8} ${SIM}
 	${MKDIRBIN}
-	${CC} ${PDP8} ${SIM} ${PDP8_OPT} ${CC_OUTSPEC} ${LDFLAGS}
+	${CC} ${PDP8} ${SIM} ${PDP8_OPT} ${CC_OUTSPEC} ${LDFLAGS} -lportaudio -lsamplerateint
 ifneq (,$(call find_test,${PDP8D},pdp8))
 	$@ $(call find_test,${PDP8D},pdp8) ${TEST_ARG}
 endif

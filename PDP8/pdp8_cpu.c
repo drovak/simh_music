@@ -195,6 +195,13 @@
 
 #include "pdp8_defs.h"
 
+#define MUSIC
+
+#ifdef MUSIC
+#include "pdp8_music.h"
+int init_music = 1;
+#endif
+
 #define PCQ_SIZE        64                              /* must be 2**n */
 #define PCQ_MASK        (PCQ_SIZE - 1)
 #define PCQ_ENTRY(x)    pcq[pcq_p = (pcq_p - 1) & PCQ_MASK] = x
@@ -331,7 +338,12 @@ t_stat reason;
 /* Restore register state */
 
 if (build_dev_tab ())                                   /* build dev_tab */
+{
+#ifdef MUSIC
+	pause_stream();										/* stop stream if we're halting */
+#endif
     return SCPE_STOP;
+}
 PC = saved_PC & 007777;                                 /* load local copies */
 IF = saved_PC & 070000;
 DF = saved_DF & 070000;
@@ -428,6 +440,30 @@ while (reason == 0) {                                   /* loop until halted */
             hst[hst_p].opnd = M[ea];                    /* save operand */
             }
         }
+
+#ifdef MUSIC
+
+if (init_music)	/* have we initialized the music player? */
+{
+	init_music = 0;
+	do_init_music();
+}
+
+play_stream();	//only will play stream if it was stopped and it had been started prior
+
+elapsed_time += calc_inst_time(IR, PC);	/* calculate elapsed time from instruction to be executed */
+
+if (pulse_ptr >= INPUT_LENGTH)	/* is the buffer full? */
+{
+	make_buffer();	/* yes, tidy it up and downsample it; wait for audio buffer to catch up if necesary */
+}
+
+if (stream_error)	/* did the buffer overrun? */
+	return STOP_HALT;	/* yes, stop the simulator */
+
+pulse_ptr = (elapsed_time) / 10 + (elapsed_time % 10 < 5 ? 0 : 1);	/* point to the new location of the next possible pulse */
+
+#endif		
 
 switch ((IR >> 7) & 037) {                              /* decode IR<0:4> */
 
@@ -1253,6 +1289,9 @@ switch ((IR >> 7) & 037) {                              /* decode IR<0:4> */
                 int_enable = INT_INIT_ENABLE;
                 LAC = 0;
                 reset_all (1);                          /* reset all dev */
+#ifdef MUSIC
+				do_music();								/* make pulse for music player */
+#endif				
                 break;
                 }                                       /* end switch pulse */
             break;                                      /* end case 0 */
@@ -1368,6 +1407,10 @@ saved_DF = DF & 070000;
 saved_LAC = LAC & 017777;
 saved_MQ = MQ & 07777;
 pcq_r->qptr = pcq_p;                                    /* update pc q ptr */
+#ifdef MUSIC
+if (reason != 0)										/* stop stream if we're halting */
+	pause_stream();
+#endif
 return reason;
 }                                                       /* end sim_instr */
 
