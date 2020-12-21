@@ -188,6 +188,12 @@ void do_music()
 	}
 }
 
+/* 
+Instruction times for a PDP-8/E
+Returns values in tenths of microseconds
+IOT is not at all accurate, but MUSIC.PA uses no IOTs in its main loop
+Derived from Bernhard Baehr's PDP-8/E Simulator for macOS
+*/
 int calc_inst_time(int IR, int PC)
 {
 	switch (IR >> 9) {
